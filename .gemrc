@@ -1,0 +1,10 @@
+---
+:bulk_threshold: 1000
+:benchmark: false
+:sources:
+- http://ruby.taobao.org/
+:update_sources: true
+:backtrace: false
+:verbose: true
+#install: --no-ri
+#update: --no-ri
