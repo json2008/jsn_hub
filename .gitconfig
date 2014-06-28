@@ -18,6 +18,7 @@
 	sslVerify = false
 [core]
 	excludesfile = /Users/jswk/.gitignore_global
+	editor = subl -w
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
