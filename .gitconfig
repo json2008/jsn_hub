@@ -1,0 +1,29 @@
+[user]
+	name = Jason Liu
+	email = jminfo@126.com
+[alias]
+  ci = commit
+  ca = "commit -a"
+  cam = "commit -a -C HEAD --amend"
+  st = status
+  co = checkout
+  br = branch
+[color]
+  ui = true
+  diff = auto
+  status = auto
+  branch = auto
+  interactive = auto
+[http]
+	sslVerify = false
+[core]
+	excludesfile = /Users/jswk/.gitignore_global
+	editor = subl -w
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /opt/homebrew-cask/Caskroom/sourcetree/1.9.4.1/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[push]
+	default = simple

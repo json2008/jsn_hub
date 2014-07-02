@@ -1,0 +1,301 @@
+# This is a basic VCL configuration file for varnish.  See the vcl(7)
+# man page for details on VCL syntax and semantics.
+#
+# Default backend definition.  Set this to point to your content
+# server.
+#
+backend hz_17 {
+  .host = "127.0.0.1";
+  .port = "8080";
+  .connect_timeout = 10s;
+  .first_byte_timeout = 15s;
+  .between_bytes_timeout = 5s;
+  .max_connections = 300;
+}
+
+backend hz_qt {
+  .host = "10.0.1.4";
+  .port = "8080";
+  .connect_timeout = 10s;
+  .first_byte_timeout = 15s;
+  .between_bytes_timeout = 5s;
+  .max_connections = 300;
+}
+
+director hx random {
+  { .backend = hz_17; .weight = 5;}
+  { .backend = hz_qt; .weight = 1;}
+}
+
+/*
+director b3 fallback {
+  { .backend = www1; }
+  { .backend = www2; } // will only be used if www1 is unhealthy.
+  { .backend = www3; } // will only be used if both www1 and www2
+                       // are unhealthy.
+}
+
+backend server2 {
+   .host = "server2.example.com";
+    .port = "http";
+    .connect_timeout = 1s;
+    .first_byte_timeout = 5s;
+    .between_bytes_timeout = 2s;
+    .max_connections = 500;
+   .probe = healthcheck;
+ }
+
+ probe healthcheck {
+   .url = "/status.cgi";
+   .interval = 60s;
+   .timeout = 0.3 s;
+   .window = 8;
+   .threshold = 3;
+   .initial = 3;
+   .expected_response = 200;
+   .request =
+      "GET / HTTP/1.1"
+      "Host: www.foo.bar"
+      "Connection: close";
+}
+*/
+
+sub vcl_recv {
+/*
+    if (req.url ~ "^/favorites/(create|destroy)") {
+      if (req.url ~ "(v=v4\.0\.2|callback=)") {
+        #noop;
+      } else {
+        error 701 {""version error!""};
+      }
+    }
+*/
+    if (req.url ~ "^/favorites/(create|destroy)" && req.url !~ "(v=v4\.0\.2|callback=)") {
+        error 701 {""version error!""};
+    }
+
+    set req.backend = hx;
+    if (req.http.host !~ "\.(itlily|hotchanson|ttpod)\.com$") {
+      error 403 "Not allowed.";
+    }
+
+    if (req.url ~ "/data/user/p") {
+      error 403 "Not allowed.";
+    }
+/*
+    if (req.http.referer && req.http.referer !~ "(itlily|hotchanson|ttpod)\.com") {
+      error 403 "Not allowed.";
+    }
+
+    if (!req.backend.healthy) {
+       set req.grace = 5m;
+    } else {
+       set req.grace = 15s;
+    }
+*/
+
+    set req.grace = 15s;
+
+    unset req.http.Cookie;
+
+    if (req.http.host ~ "(h|s)\.itlily\.com|ting\.hotchanson\.com") {
+      set req.http.host = "h.itlily.com";
+    }
+
+/*
+    if (req.http.Accept-Encoding) {
+      if (req.url ~ "\.(jpg|png|gif|gz|tgz|bz2|tbz|mp3|ogg)$") {
+          # No point in compressing these
+          unset req.http.Accept-Encoding;
+      } elsif (req.http.Accept-Encoding ~ "gzip") {
+          set req.http.Accept-Encoding = "gzip";
+      } elsif (req.http.Accept-Encoding ~ "deflate") {
+          set req.http.Accept-Encoding = "deflate";
+      } else {
+          # unknown algorithm
+          unset req.http.Accept-Encoding;
+      }
+    }
+*/
+    if (req.request == "DELETE") {
+      return (lookup);
+    }
+
+    if (req.url ~ "^/tag/plaza|\.(gif|png|jpeg|jpg|html|css|js|ico)") {
+      #unset req.http.Cookie;
+      set req.url = regsub(req.url, "\?.*$", "");
+      return (lookup);
+    }
+}
+#
+# Below is a commented-out copy of the default VCL logic.  If you
+# redefine any of these subroutines, the built-in logic will be
+# appended to your code.
+# sub vcl_recv {
+#     if (req.restarts == 0) {
+#   if (req.http.x-forwarded-for) {
+#       set req.http.X-Forwarded-For =
+#     req.http.X-Forwarded-For + ", " + client.ip;
+#   } else {
+#       set req.http.X-Forwarded-For = client.ip;
+#   }
+#     }
+#     if (req.request != "GET" &&
+#       req.request != "HEAD" &&
+#       req.request != "PUT" &&
+#       req.request != "POST" &&
+#       req.request != "TRACE" &&
+#       req.request != "OPTIONS" &&
+#       req.request != "DELETE") {
+#         /* Non-RFC2616 or CONNECT which is weird. */
+#         return (pipe);
+#     }
+#     if (req.request != "GET" && req.request != "HEAD") {
+#         /* We only deal with GET and HEAD by default */
+#         return (pass);
+#     }
+#     if (req.http.Authorization || req.http.Cookie) {
+#         /* Not cacheable by default */
+#         return (pass);
+#     }
+#     return (lookup);
+# }
+#
+# sub vcl_pipe {
+#     # Note that only the first request to the backend will have
+#     # X-Forwarded-For set.  If you use X-Forwarded-For and want to
+#     # have it set for all requests, make sure to have:
+#     # set bereq.http.connection = "close";
+#     # here.  It is not set by default as it might break some broken web
+#     # applications, like IIS with NTLM authentication.
+#     return (pipe);
+# }
+#
+# sub vcl_pass {
+#     return (pass);
+# }
+#
+# sub vcl_hash {
+#     hash_data(req.url);
+#     if (req.http.host) {
+#         hash_data(req.http.host);
+#     } else {
+#         hash_data(server.ip);
+#     }
+#     return (hash);
+# }
+#
+sub vcl_hit {
+  if (req.request == "DELETE") {
+      purge;
+      error 200 "purged in hit:" + req.url;
+    }
+}
+# sub vcl_hit {
+#     return (deliver);
+# }
+#
+sub vcl_miss {
+  if (req.request == "DELETE") {
+      purge;
+      error 200 "purged in miss:" + req.url;
+    }
+}
+# sub vcl_miss {
+#     return (fetch);
+# }
+#
+
+sub vcl_fetch {
+  set beresp.grace = 10m;
+/*
+  if (beresp.status == 500) {
+    set beresp.saintmode = 10s;
+    return (restart);
+  }
+*/
+
+  unset beresp.http.Set-Cookie;
+  if (beresp.http.TryCache && req.restarts <= 3) {
+      set req.http.Host = beresp.http.TryHost;
+      set req.url = beresp.http.TryUrl;
+      set req.request = beresp.http.TryMethod;
+      #set req.http.TryCache = "1";
+      return (restart);
+  }
+  set beresp.http.x-url = req.url;
+}
+
+# sub vcl_fetch {
+#     if (beresp.ttl <= 0s ||
+#         beresp.http.Set-Cookie ||
+#         beresp.http.Vary == "*") {
+#     /*
+#      * Mark as "Hit-For-Pass" for the next 2 minutes
+#      */
+#     set beresp.ttl = 120 s;
+#     return (hit_for_pass);
+#     }
+#     return (deliver);
+# }
+#
+sub vcl_deliver {
+  set resp.http.Server = "Lighttpd/1.4.32";
+  set resp.http.X-Powered-By = "Google Go!/1.2.1";
+
+  if (obj.hits > 0) {
+      set resp.http.X-Cache = "HIT:" + obj.hits;
+  } else {
+      set resp.http.X-Cache = "MISS";
+  }
+  unset resp.http.X-Varnish;
+  unset resp.http.Via;
+  unset resp.http.x-url; # Optional
+}
+# sub vcl_deliver {
+#     return (deliver);
+# }
+#
+
+sub vcl_error {
+    set obj.http.Content-Type = "application/json";
+    if (obj.status == 701) {
+      synthetic {"{"code":30305,"msg":"} + obj.response + "}";
+      set obj.status = 200;
+    } else {
+      synthetic {"{"code":0, "status":"} + obj.status + {","msg":"} + obj.response + "}";
+    }
+    return (deliver);
+}
+
+# sub vcl_error {
+#     set obj.http.Content-Type = "text/html; charset=utf-8";S
+#     set obj.http.Retry-After = "5";
+#     synthetic {"
+# <?xml version="1.0" encoding="utf-8"?>
+# <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+#  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+# <html>
+#   <head>
+#     <title>"} + obj.status + " " + obj.response + {"</title>
+#   </head>
+#   <body>
+#     <h1>Error "} + obj.status + " " + obj.response + {"</h1>
+#     <p>"} + obj.response + {"</p>
+#     <h3>Guru Meditation:</h3>
+#     <p>XID: "} + req.xid + {"</p>
+#     <hr>
+#     <p>Varnish cache server</p>
+#   </body>
+# </html>
+# "};
+#     return (deliver);
+# }
+#
+# sub vcl_init {
+#   return (ok);
+# }
+#
+# sub vcl_fini {
+#   return (ok);
+# }

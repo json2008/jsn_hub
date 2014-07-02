@@ -1,0 +1,30 @@
+[core]
+	symlinks = false
+	autocrlf = false
+[color]
+	diff = auto
+	status = auto
+	branch = auto
+	interactive = true
+	ui = always
+[pack]
+	packSizeLimit = 2g
+[help]
+	format = html
+[http]
+	sslCAinfo = /bin/curl-ca-bundle.crt
+[sendemail]
+	smtpserver = /bin/msmtp.exe
+
+[diff "astextplain"]
+	textconv = astextplain
+[rebase]
+	autosquash = true
+[alias]
+  br = branch
+	ci = commit 
+	co = checkout
+	st = status
+[user]
+	name = js
+	email = lamp2008@gmail.com
