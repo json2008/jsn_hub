@@ -1,0 +1,40 @@
+source "http://ruby.taobao.org"
+gem 'sinatra', :require => 'sinatra/base'
+gem 'sinatra-logger', :require => 'sinatra/logger'
+# gem 'passenger'
+gem 'sinatra-contrib', :require => 'sinatra/contrib'
+gem 'sinatra-jsonp', :require => 'sinatra/jsonp'
+gem 'sinatra-namespace', :require => 'sinatra/namespace'
+
+gem 'rack-contrib', :require => 'rack/contrib'
+# gem 'rack-cache', :require => 'rack/cache'
+gem 'mongo'#, '= 1.6.4'
+gem 'mysql2'
+gem 'tmm1-amqp'
+#gem 'em-mongo'
+# gem 'json'
+gem 'yajl-ruby', :require => 'yajl/json_gem'
+
+gem 'bson_ext'
+
+gem 'mime-types'
+gem 'logger'
+gem 'eventmachine'
+# gem 'eventmachine_httpserver'
+gem "hiredis"#, "~> 0.3.1"
+gem "redis", :require => ["redis/connection/hiredis", "redis"]
+gem 'bson_ext'
+gem 'mongo'#, '= 1.6.4'
+gem 'rest-client'
+gem 'uuid'
+gem 'mongoid'
+gem 'pony'
+gem "em-synchrony"
+# gem "redis", :require => ["redis/connection/synchrony", "redis"]
+gem 'thin'
+gem 'bond'
+#gem "em-synchrony"
+
+# gem 'dalli'
+# gem 'memcached'
+# gem 'mongo_mapper'
