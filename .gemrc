@@ -2,9 +2,11 @@
 :bulk_threshold: 1000
 :benchmark: false
 :sources:
+- https://rubygems.org/
 - http://ruby.taobao.org/
 :update_sources: true
 :backtrace: false
 :verbose: true
 #install: --no-ri
 #update: --no-ri
+gem: --no-document
